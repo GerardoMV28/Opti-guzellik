@@ -1,0 +1,32 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+  errors:
+    # Migración gradual: withOpacity y otras APIs deprecadas en Flutter reciente.
+    deprecated_member_use: ignore
+
+linter:
+  rules:
+    # Estilo heredado; se pueden reactivar al refactorizar pantallas.
+    use_key_in_widget_constructors: false
+    library_private_types_in_public_api: false
+    use_super_parameters: false
+    prefer_const_constructors_in_immutables: false
+    prefer_final_fields: false
+    sized_box_for_whitespace: false
+    unnecessary_to_list_in_spreads: false
+    curly_braces_in_flow_control_structures: false
+    no_leading_underscores_for_local_identifiers: false
+    unnecessary_import: false
+    avoid_web_libraries_in_flutter: false
+    use_build_context_synchronously: false
+    avoid_print: false
+
+# https://dart.dev/guides/language/analysis-options
