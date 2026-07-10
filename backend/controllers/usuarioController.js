@@ -82,19 +82,43 @@ exports.updateUsuario = async (req, res) => {
   }
 };
 
+// Verifica que desactivar a este usuario no deje al sistema sin administradores activos
+async function bloqueaUltimoAdmin(idObjetivo, req) {
+  if (String(req.userId) === String(idObjetivo)) {
+    return 'No puedes eliminar o desactivar tu propia cuenta';
+  }
+  const objetivo = await User.findById(idObjetivo);
+  if (objetivo && objetivo.rol === 'admin' && objetivo.activo) {
+    const otrosAdminsActivos = await User.countDocuments({
+      rol: 'admin',
+      activo: true,
+      _id: { $ne: idObjetivo },
+    });
+    if (otrosAdminsActivos === 0) {
+      return 'Debe existir al menos un administrador activo';
+    }
+  }
+  return null;
+}
+
 // Eliminar usuario (soft delete - desactivar)
 exports.deleteUsuario = async (req, res) => {
   try {
+    const bloqueo = await bloqueaUltimoAdmin(req.params.id, req);
+    if (bloqueo) {
+      return res.status(400).json({ message: bloqueo });
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { activo: false },
       { new: true }
     ).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-    
+
     res.json({ message: 'Usuario desactivado correctamente', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -105,17 +129,24 @@ exports.deleteUsuario = async (req, res) => {
 exports.toggleActivo = async (req, res) => {
   try {
     const { activo } = req.body;
-    
+
+    if (activo === false) {
+      const bloqueo = await bloqueaUltimoAdmin(req.params.id, req);
+      if (bloqueo) {
+        return res.status(400).json({ message: bloqueo });
+      }
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { activo },
       { new: true }
     ).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-    
+
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -32,7 +32,17 @@ const antecedentesSchema = new mongoose.Schema({
 const avTablaSchema = new mongoose.Schema({
   lejana: { od: String, oi: String },
   cerca: { od: String, oi: String },
-  otro: String
+  otro: String,
+  sin_lentes: { od: String, oi: String, ao: String },
+  con_lentes: { od: String, oi: String, ao: String },
+  estenopeica: { od: String, oi: String }
+}, { _id: false });
+
+// Agudeza visual como campo independiente (usado en revisiones)
+const agudezaVisualSchema = new mongoose.Schema({
+  sin_lentes: { od: String, oi: String, ao: String },
+  con_lentes: { od: String, oi: String, ao: String },
+  estenopeica: { od: String, oi: String }
 }, { _id: false });
 
 // Esquema para RX Anterior
@@ -42,15 +52,45 @@ const rxAnteriorSchema = new mongoose.Schema({
     cil: String,
     eje: String,
     add: String,
-    av: String
+    av: String,
+    dnp: String
   },
   oi: {
     esf: String,
     cil: String,
     eje: String,
     add: String,
-    av: String
+    av: String,
+    dnp: String
   }
+}, { _id: false });
+
+// Síntomas específicos de consulta infantil
+const sintomasInfanteSchema = new mongoose.Schema({
+  enrojecimiento: { type: Boolean, default: false },
+  comezon: { type: Boolean, default: false },
+  dolorCabeza: { type: Boolean, default: false },
+  lagrimeoArdor: { type: Boolean, default: false },
+  pierdeEquilibrio: { type: Boolean, default: false },
+  tropieza: { type: Boolean, default: false },
+  acercaObjetos: { type: Boolean, default: false },
+  chocaObjetos: { type: Boolean, default: false },
+  natural: { type: Boolean, default: false },
+  entrecierraOjos: { type: Boolean, default: false },
+  escrituraIrregular: { type: Boolean, default: false },
+  desempenoEscolar: { type: Boolean, default: false },
+  noSintomas: { type: Boolean, default: false },
+  cesarea: { type: Boolean, default: false },
+  otros: String
+}, { _id: false });
+
+// Antecedentes personales específicos de consulta infantil
+const antecedentesInfanteSchema = new mongoose.Schema({
+  diabetico: { type: Boolean, default: false },
+  hipertenso: { type: Boolean, default: false },
+  alergias: { type: Boolean, default: false },
+  enfermedadesCronicas: { type: Boolean, default: false },
+  especifiqueAlergias: String
 }, { _id: false });
 
 // Esquema para Cover Test
@@ -102,14 +142,16 @@ const rxFinalSchema = new mongoose.Schema({
     cil: String,
     eje: String,
     add: String,
-    av: String
+    av: String,
+    dnp: String
   },
   oi: {
     esf: String,
     cil: String,
     eje: String,
     add: String,
-    av: String
+    av: String,
+    dnp: String
   }
 }, { _id: false });
 
@@ -145,7 +187,31 @@ const consultaSchema = new mongoose.Schema({
   diagnostico: String,
   recomendaciones: String,
   notasAdicionales: String,
-  productosRecetados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Producto' }]
+  productosRecetados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Producto' }],
+
+  // Marcador explícito de revisión (vs. consulta inicial)
+  esRevision: { type: Boolean, default: false },
+  // Agudeza visual enviada como campo independiente (formulario de revisión)
+  agudezaVisual: agudezaVisualSchema,
+
+  // Campos específicos de la consulta infantil
+  padreTutor: String,
+  edad: Number,
+  telefono: String,
+  sexo: { type: String, enum: ['masculino', 'femenino'] },
+  anioEscolar: String,
+  sintomasInfante: sintomasInfanteSchema,
+  tipoParto: String,
+  complicaciones: String,
+  estrabismoFamiliar: Boolean,
+  lazoFamiliar: String,
+  golpeOjos: Boolean,
+  especifiqueGolpe: String,
+  antecedentesInfante: antecedentesInfanteSchema,
+  ultimoExamen: String,
+  equilibrioPie: String,
+  requiereTerapia: String,
+  tratamientoPatologia: String
 });
 
 // Esquema de Paciente (se mantiene igual)

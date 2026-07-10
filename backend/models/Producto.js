@@ -39,31 +39,23 @@ const productoSchema = new mongoose.Schema({
   
   // Campos específicos para micas
   mica: {
+    presentacion: String,
     material: String,
-    indice_refraccion: String,
-    tipo: String,
     color: String,
     tratamientos: [String],
-    rangos_graduacion: {
-      esfera: { min: Number, max: Number, incremento: Number },
-      cilindro: { min: Number, max: Number, incremento: Number },
-      adicion: { min: Number, max: Number, incremento: Number }
-    }
+    serie: String,
+    rango_graduacion: String,
+    fabricante: String
   },
-  
+
   // Campos específicos para lentes de contacto
   lente_contacto: {
     tipo: String,
+    marca_lc: String,
+    diseno: String,
     material: String,
     reemplazo: String,
-    parametros: {
-      curva_base: String,
-      diametro: String,
-      esfera: String,
-      cilindro: String,
-      eje: String,
-      adicion: String
-    },
+    parametros: String,
     color: String
   },
   
