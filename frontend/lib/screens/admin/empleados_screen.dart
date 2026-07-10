@@ -14,6 +14,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String _searchQuery = '';
+  bool _mostrarInactivos = false;
 
   @override
   void initState() {
@@ -42,17 +43,24 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   }
 
 List<Empleado> get _empleadosFiltrados {
-  if (_searchQuery.isEmpty) return _empleados;
-  
-  final query = _searchQuery.toLowerCase().trim();
-  
-  return _empleados.where((e) {
-    final nombreCompleto = e.nombre.toLowerCase();
-    final email = e.email.toLowerCase();
-    
-    // Buscar en nombre completo O en email
-    return nombreCompleto.contains(query) || email.contains(query);
-  }).toList();
+  var resultados = _empleados;
+
+  if (!_mostrarInactivos) {
+    resultados = resultados.where((e) => e.activo).toList();
+  }
+
+  if (_searchQuery.isNotEmpty) {
+    final query = _searchQuery.toLowerCase().trim();
+    resultados = resultados.where((e) {
+      final nombreCompleto = e.nombre.toLowerCase();
+      final email = e.email.toLowerCase();
+
+      // Buscar en nombre completo O en email
+      return nombreCompleto.contains(query) || email.contains(query);
+    }).toList();
+  }
+
+  return resultados;
 }
 
   void _nuevoEmpleado() async {
@@ -170,29 +178,47 @@ List<Empleado> get _empleadosFiltrados {
                   ],
                 ),
                 SizedBox(height: 16),
-                Container(
-                  width: 400,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por nombre o email...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: AppColors.azulCobalto,
+                Row(
+                  children: [
+                    Container(
+                      width: 400,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por nombre o email...',
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: AppColors.azulCobalto,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                  ),
+                    SizedBox(width: 16),
+                    Switch(
+                      value: _mostrarInactivos,
+                      activeColor: AppColors.azulCobalto,
+                      onChanged: (value) {
+                        setState(() {
+                          _mostrarInactivos = value;
+                        });
+                      },
+                    ),
+                    Text(
+                      'Mostrar inactivos',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -250,17 +276,60 @@ List<Empleado> get _empleadosFiltrados {
                       final empleado = _empleadosFiltrados[index];
                       return Card(
                         margin: EdgeInsets.only(bottom: 12),
-                        child: ListTile(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            border: empleado.activo
+                                ? null
+                                : Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: empleado.rol == 'admin'
-                                ? AppColors.azulReal
-                                : AppColors.azulCobalto,
+                            backgroundColor: !empleado.activo
+                                ? Colors.grey
+                                : empleado.rol == 'admin'
+                                    ? AppColors.azulReal
+                                    : AppColors.azulCobalto,
                             child: Text(
                               empleado.nombre[0].toUpperCase(),
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
-                          title: Text(empleado.nombre),
+                          title: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  empleado.nombre,
+                                  style: TextStyle(
+                                    color: empleado.activo
+                                        ? null
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              if (!empleado.activo) ...[
+                                SizedBox(width: 8),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Inactivo',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -345,6 +414,7 @@ List<Empleado> get _empleadosFiltrados {
                                 },
                               ),
                             ],
+                          ),
                           ),
                         ),
                       );

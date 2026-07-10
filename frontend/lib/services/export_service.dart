@@ -1,14 +1,12 @@
-  import 'dart:io' show File;
-  import 'dart:html' as html;
-  import 'package:flutter/foundation.dart' show kIsWeb;
   import 'package:flutter/services.dart';
   import 'package:intl/intl.dart';
   import 'package:pdf/pdf.dart';
   import 'package:pdf/widgets.dart' as pw;
   import 'package:printing/printing.dart';
   import 'package:excel/excel.dart';
-  import 'package:path_provider/path_provider.dart';
-  import 'package:share_plus/share_plus.dart';
+  import 'platform/export_saver_stub.dart'
+      if (dart.library.io) 'platform/export_saver_io.dart'
+      if (dart.library.html) 'platform/export_saver_web.dart';
   import '../models/reportes/resumen_ventas_model.dart';
   import '../models/reportes/venta_reporte_model.dart';
   import '../models/reportes/producto_top_model.dart';
@@ -397,25 +395,11 @@
         throw Exception('No se pudo generar el archivo Excel.');
       }
 
-      if (kIsWeb) {
-        // Versión para WEB
-        final blob = html.Blob([bytes], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        html.AnchorElement(href: url)
-          ..setAttribute('download', 'reporte_ventas_${_dateFormat.format(DateTime.now())}.xlsx')
-          ..click();
-        html.Url.revokeObjectUrl(url);
-      } else {
-        // Versión para Móvil y Desktop
-        final directory = await getTemporaryDirectory();
-        final path = '${directory.path}/reporte_ventas_${_dateFormat.format(DateTime.now())}.xlsx';
-        final file = File(path);
-        await file.writeAsBytes(bytes);
-        await Share.shareXFiles(
-          [XFile(path)],
-          text: 'Reporte de Ventas ${_dateFormat.format(fechaInicio)} - ${_dateFormat.format(fechaFin)}',
-        );
-      }
+      await guardarYCompartirExcel(
+        bytes,
+        'reporte_ventas_${_dateFormat.format(DateTime.now())}.xlsx',
+        'Reporte de Ventas ${_dateFormat.format(fechaInicio)} - ${_dateFormat.format(fechaFin)}',
+      );
     }
 
     // Función auxiliar para convertir a CellValue

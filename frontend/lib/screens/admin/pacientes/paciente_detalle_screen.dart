@@ -1426,9 +1426,13 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
   }
 
   Widget _buildConsultaCard(Consulta consulta) {
-    final esPrimeraConsulta = consulta.rxAnterior != null || 
-                               consulta.sintomas != null ||
-                               consulta.antecedentes != null;
+    // Usa el flag explícito cuando está disponible; si no (consultas creadas
+    // antes de que el backend lo guardara), recurre a la heurística anterior.
+    final esPrimeraConsulta = consulta.esRevision
+        ? false
+        : (consulta.rxAnterior != null ||
+            consulta.sintomas != null ||
+            consulta.antecedentes != null);
     
     return Card(
       margin: EdgeInsets.only(bottom: 16),

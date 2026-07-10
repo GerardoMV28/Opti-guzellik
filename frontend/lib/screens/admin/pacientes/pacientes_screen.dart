@@ -15,6 +15,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String _searchQuery = '';
+  bool _mostrarInactivos = false;
 
   @override
   void initState() {
@@ -43,13 +44,21 @@ class _PacientesScreenState extends State<PacientesScreen> {
   }
 
   List<Paciente> get _pacientesFiltrados {
-    if (_searchQuery.isEmpty) return _pacientes;
+    var resultados = _pacientes;
 
-    final query = _searchQuery.toLowerCase().trim();
-    return _pacientes.where((p) {
-      return p.nombre.toLowerCase().contains(query) ||
-          p.telefono.contains(query);
-    }).toList();
+    if (!_mostrarInactivos) {
+      resultados = resultados.where((p) => p.activo).toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase().trim();
+      resultados = resultados.where((p) {
+        return p.nombre.toLowerCase().contains(query) ||
+            p.telefono.contains(query);
+      }).toList();
+    }
+
+    return resultados;
   }
 
   void _nuevoPaciente() async {
@@ -152,30 +161,48 @@ class _PacientesScreenState extends State<PacientesScreen> {
                   ],
                 ),
                 SizedBox(height: 16),
-                // Barra de búsqueda
-                Container(
-                  width: 400,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por nombre, teléfono',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: AppColors.azulCobalto,
+                Row(
+                  children: [
+                    // Barra de búsqueda
+                    Container(
+                      width: 400,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por nombre, teléfono',
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: AppColors.azulCobalto,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                  ),
+                    SizedBox(width: 16),
+                    Switch(
+                      value: _mostrarInactivos,
+                      activeColor: AppColors.azulCobalto,
+                      onChanged: (value) {
+                        setState(() {
+                          _mostrarInactivos = value;
+                        });
+                      },
+                    ),
+                    Text(
+                      'Mostrar inactivos',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -254,7 +281,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
         contentPadding: EdgeInsets.all(16),
         leading: CircleAvatar(
           radius: 28,
-          backgroundColor: AppColors.azulCobalto,
+          backgroundColor: paciente.activo ? AppColors.azulCobalto : Colors.grey,
           child: Text(
             paciente.nombre.isNotEmpty ? paciente.nombre[0].toUpperCase() : '?',
             style: TextStyle(
@@ -264,9 +291,37 @@ class _PacientesScreenState extends State<PacientesScreen> {
             ),
           ),
         ),
-        title: Text(
-          paciente.nombre,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                paciente.nombre,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: paciente.activo ? null : Colors.grey,
+                ),
+              ),
+            ),
+            if (!paciente.activo) ...[
+              SizedBox(width: 8),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Inactivo',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

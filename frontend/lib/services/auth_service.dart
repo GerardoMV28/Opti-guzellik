@@ -95,7 +95,7 @@ class AuthService {
     
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/auth/verificar'),
+        Uri.parse('$_baseUrl/auth/verify'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

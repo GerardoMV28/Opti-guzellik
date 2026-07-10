@@ -15,6 +15,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
   String? _errorMessage;
   String _searchQuery = '';
   String _filtroTipo = 'todos';
+  bool _mostrarInactivos = false;
 
   final List<String> _tipos = [
     'todos',
@@ -52,7 +53,12 @@ class _ProductosScreenState extends State<ProductosScreen> {
 
   List<Producto> get _productosFiltrados {
     var resultados = _productos;
-    
+
+    // Filtrar inactivos
+    if (!_mostrarInactivos) {
+      resultados = resultados.where((p) => p.activo).toList();
+    }
+
     // Filtrar por tipo
     if (_filtroTipo != 'todos') {
       resultados = resultados.where((p) => p.tipo == _filtroTipo).toList();
@@ -209,7 +215,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
                       ),
                     ),
                     SizedBox(width: 16),
-                    
+
                     // Barra de búsqueda
                     Expanded(
                       child: TextField(
@@ -230,6 +236,20 @@ class _ProductosScreenState extends State<ProductosScreen> {
                             });
                           },
                       ),
+                    ),
+                    SizedBox(width: 16),
+                    Switch(
+                      value: _mostrarInactivos,
+                      activeColor: AppColors.azulCobalto,
+                      onChanged: (value) {
+                        setState(() {
+                          _mostrarInactivos = value;
+                        });
+                      },
+                    ),
+                    Text(
+                      'Mostrar inactivos',
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
                   ],
                 ),

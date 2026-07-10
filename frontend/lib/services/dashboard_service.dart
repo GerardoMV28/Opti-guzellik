@@ -15,7 +15,6 @@ class DashboardService {
       if (token == null) {
         throw Exception('No hay sesión activa. Por favor inicie sesión.');
       }
-      
       final response = await http.get(
         Uri.parse('$baseUrl/dashboard/stats'),
         headers: {

@@ -4,7 +4,8 @@ class Consulta {
   final String especialista;
   final String motivoConsulta;
   final String tipoPaciente; // 'adulto' o 'infante'
-  
+  final bool esRevision;
+
   // Síntomas
   final Map<String, dynamic>? sintomas;
   final String? otrosSintomas;
@@ -60,6 +61,7 @@ class Consulta {
     required this.especialista,
     required this.motivoConsulta,
     this.tipoPaciente = 'adulto',
+    this.esRevision = false,
     this.sintomas,
     this.otrosSintomas,
     this.antecedentes,
@@ -93,7 +95,8 @@ class Consulta {
       especialista: json['especialista'] ?? '',
       motivoConsulta: json['motivoConsulta'] ?? json['motivo_consulta'] ?? '',
       tipoPaciente: json['tipoPaciente'] ?? json['tipo_paciente'] ?? 'adulto',
-      
+      esRevision: json['esRevision'] ?? false,
+
       // Síntomas
       sintomas: json['sintomas'],
       otrosSintomas: json['sintomas']?['otros'] ?? '',
