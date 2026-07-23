@@ -42,4 +42,15 @@ class AppColors {
       Colors.white.withOpacity(0.95),
     ],
   );
+
+  // Gradiente sutil para AppBars, para acercar el look de las pantallas
+  // internas al del login sin perder legibilidad en pantallas de trabajo.
+  static LinearGradient get appBarGradient => LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      azulReal,
+      azulCobalto,
+    ],
+  );
 }

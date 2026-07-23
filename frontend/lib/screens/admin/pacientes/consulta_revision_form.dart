@@ -129,7 +129,8 @@ class _ConsultaRevisionFormState extends State<ConsultaRevisionForm> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.azulReal,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: BoxDecoration(gradient: AppColors.appBarGradient)),
         foregroundColor: Colors.white,
         title: Text(
           'Revisión - ${widget.tipoPaciente == 'adulto' ? 'Adulto' : 'Infantil'}',

@@ -64,7 +64,7 @@ class EmpleadoService {
         final data = json.decode(response.body);
         return Empleado.fromJson(data);
       } else {
-        throw Exception('Error al crear empleado: ${response.statusCode}');
+        throw Exception(_mensajeError(response));
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
@@ -88,7 +88,7 @@ class EmpleadoService {
         final data = json.decode(response.body);
         return Empleado.fromJson(data);
       } else {
-        throw Exception('Error al actualizar empleado: ${response.statusCode}');
+        throw Exception(_mensajeError(response));
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');

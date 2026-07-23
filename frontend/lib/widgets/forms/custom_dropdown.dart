@@ -29,16 +29,24 @@ class CustomDropdown<T> extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.azulReal,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppColors.azulReal.withOpacity(0.8),
+              letterSpacing: 0.3,
             ),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 6),
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: DropdownButtonFormField<T>(
               value: value,
@@ -47,13 +55,27 @@ class CustomDropdown<T> extends StatelessWidget {
               validator: validator,
               decoration: InputDecoration(
                 prefixIcon: icon != null
-                    ? Icon(icon, color: AppColors.azulCobalto, size: 20)
+                    ? Icon(icon, color: AppColors.azulCobalto.withOpacity(0.7), size: 20)
                     : null,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: AppColors.turquesa, width: 1.5),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
                 color: Colors.black87,
               ),
               dropdownColor: Colors.white,

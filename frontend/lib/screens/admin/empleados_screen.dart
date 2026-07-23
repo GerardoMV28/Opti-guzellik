@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/colors.dart';
 import '../../services/empleado_service.dart';
 import '../../models/empleado.dart';
+import '../../widgets/forms/form_card.dart';
 import 'empleado_form.dart';
 
 class EmpleadosScreen extends StatefulWidget {
@@ -101,8 +102,12 @@ List<Empleado> get _empleadosFiltrados {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Eliminar Empleado'),
-        content: Text('¿Estás seguro de eliminar a ${empleado.nombre}?'),
+        title: Text('Eliminar Empleado permanentemente'),
+        content: Text(
+          '¿Eliminar a ${empleado.nombre} para siempre? Esta acción no se puede '
+          'deshacer. Si solo quieres que no pueda iniciar sesión pero conservar '
+          'su historial, usa "Desactivar" en su lugar.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -111,7 +116,7 @@ List<Empleado> get _empleadosFiltrados {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Eliminar'),
+            child: Text('Eliminar permanentemente'),
           ),
         ],
       ),
@@ -122,7 +127,7 @@ List<Empleado> get _empleadosFiltrados {
         await EmpleadoService.deleteEmpleado(empleado.id);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Empleado eliminado correctamente'),
+            content: Text('Empleado eliminado permanentemente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -274,11 +279,13 @@ List<Empleado> get _empleadosFiltrados {
                     itemCount: _empleadosFiltrados.length,
                     itemBuilder: (context, index) {
                       final empleado = _empleadosFiltrados[index];
-                      return Card(
-                        margin: EdgeInsets.only(bottom: 12),
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: FormCard(
+                        padding: EdgeInsets.zero,
                         child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(24),
                             border: empleado.activo
                                 ? null
                                 : Border.all(color: Colors.grey.shade300),
@@ -396,10 +403,10 @@ List<Empleado> get _empleadosFiltrados {
                                     value: 'eliminar',
                                     child: ListTile(
                                       leading: Icon(
-                                        Icons.delete,
+                                        Icons.delete_forever,
                                         color: Colors.red,
                                       ),
-                                      title: Text('Eliminar'),
+                                      title: Text('Eliminar permanentemente'),
                                     ),
                                   ),
                                 ],
@@ -416,6 +423,7 @@ List<Empleado> get _empleadosFiltrados {
                             ],
                           ),
                           ),
+                        ),
                         ),
                       );
                     },

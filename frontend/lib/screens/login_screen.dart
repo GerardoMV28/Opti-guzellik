@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/input_validation.dart';
+import '../utils/auth_storage.dart';
 import '../services/auth_service.dart';
 import 'admin/dashboard_admin.dart';
 import 'empleado/dashboard_empleado.dart';  // ✅ Agregar esta importación
@@ -16,6 +17,24 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  List<String> _correosRecientes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCorreosRecientes();
+  }
+
+  Future<void> _cargarCorreosRecientes() async {
+    final correos = await AuthStorage.getRecentEmails();
+    if (!mounted) return;
+    setState(() {
+      _correosRecientes = correos;
+      if (correos.isNotEmpty && _emailController.text.isEmpty) {
+        _emailController.text = correos.first;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -140,8 +159,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           validator: InputValidators.email,
                         ),
+                        if (_correosRecientes.isNotEmpty) ...[
+                          SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: _correosRecientes.map((correo) {
+                                return ActionChip(
+                                  label: Text(
+                                    correo,
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  avatar: Icon(Icons.history, size: 16, color: AppColors.azulCobalto),
+                                  backgroundColor: AppColors.azulCobalto.withOpacity(0.08),
+                                  onPressed: () {
+                                    setState(() {
+                                      _emailController.text = correo;
+                                      _emailController.selection = TextSelection.fromPosition(
+                                        TextPosition(offset: correo.length),
+                                      );
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
                         SizedBox(height: 16),
-                        
+
                         // Campo Contraseña
                         TextFormField(
                           controller: _passwordController,
@@ -179,10 +226,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Función en desarrollo'),
-                                  backgroundColor: AppColors.azulCobalto,
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  title: Text('¿Olvidaste tu contraseña?'),
+                                  content: Text(
+                                    'Por seguridad, el restablecimiento de contraseña '
+                                    'lo debe realizar un administrador desde el panel '
+                                    'de Empleados de la óptica.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(),
+                                      child: Text('Entendido'),
+                                    ),
+                                  ],
                                 ),
                               );
                             },
@@ -260,10 +321,12 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result['success']) {
+        await AuthStorage.addRecentEmail(_emailController.text.trim());
+
         final user = result['user'];
         final nombreUsuario = user != null ? user['nombre'] : 'Usuario';
         final rolUsuario = user != null ? user['rol'] : 'sin_rol';
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('¡Bienvenido $nombreUsuario!'),

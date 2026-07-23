@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/colors.dart';
 import '../../../services/paciente_service.dart';
 import '../../../models/pacientes/paciente_model.dart';
+import '../../../utils/whatsapp_helper.dart';
+import '../../../widgets/forms/form_card.dart';
 import '../../admin/pacientes/paciente_detalle_screen.dart'; // ← Usar el detalle del admin
 import 'registro_cliente_empleado.dart';
 
@@ -44,20 +46,24 @@ class _ListaClientesEmpleadoState extends State<ListaClientesEmpleado> {
   }
 
   List<Paciente> get _clientesFiltrados {
-    if (_searchQuery.isEmpty) return _clientes;
-    return _clientes.where((c) {
+    var resultados = _clientes.where((c) => c.activo).toList();
+    if (_searchQuery.isEmpty) return resultados;
+    return resultados.where((c) {
       return c.nombre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           c.telefono.contains(_searchQuery);
     }).toList();
   }
 
-  void _verDetalle(Paciente cliente) {
-    Navigator.push(
+  void _verDetalle(Paciente cliente) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PacienteDetalleScreen(paciente: cliente),
       ),
     );
+    if (result == true) {
+      _cargarClientes();
+    }
   }
 
   @override
@@ -177,10 +183,10 @@ class _ListaClientesEmpleadoState extends State<ListaClientesEmpleado> {
   }
 
   Widget _buildClienteCard(Paciente cliente) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: FormCard(
+      padding: EdgeInsets.zero,
       child: ListTile(
         contentPadding: EdgeInsets.all(16),
         leading: CircleAvatar(
@@ -224,7 +230,17 @@ class _ListaClientesEmpleadoState extends State<ListaClientesEmpleado> {
             ),
           ],
         ),
+        trailing: IconButton(
+          icon: Icon(Icons.chat, color: Color(0xFF25D366)),
+          tooltip: 'Contactar por WhatsApp',
+          onPressed: () => WhatsAppHelper.contactar(
+            context,
+            telefono: cliente.telefono,
+            nombre: cliente.nombre,
+          ),
+        ),
         onTap: () => _verDetalle(cliente),
+      ),
       ),
     );
   }

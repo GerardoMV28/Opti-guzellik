@@ -37,6 +37,18 @@ class MyApp extends StatelessWidget {
         '/admin': (context) => AdminDashboard(),
         '/empleado': (context) => EmpleadoDashboard(),  // ✅ Ruta opcional
       },
+      // Android 15+ dibuja la app de borde a borde por defecto: sin este
+      // SafeArea, la barra de navegación del sistema queda encima de los
+      // botones inferiores (Finalizar Venta, Guardar paciente, etc.) y no
+      // se pueden presionar. Solo se protege el borde inferior; el superior
+      // se deja igual para no perder los fondos/gradientes bajo la barra
+      // de estado, que Scaffold/AppBar ya manejan correctamente.
+      builder: (context, child) {
+        return SafeArea(
+          top: false,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

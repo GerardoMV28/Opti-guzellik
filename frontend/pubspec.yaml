@@ -44,6 +44,7 @@ dependencies:
   excel: ^4.0.0          # Para generar Excel
   path_provider: ^2.1.0  # Para guardar archivos
   share_plus: ^7.2.0     # Para compartir archivos
+  url_launcher: ^6.3.1   # Para abrir WhatsApp con el número del paciente
 
 
 dev_dependencies:

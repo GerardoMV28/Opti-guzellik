@@ -379,7 +379,8 @@ class _ConsultaInfanteFormState extends State<ConsultaInfanteForm> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.azulReal,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: BoxDecoration(gradient: AppColors.appBarGradient)),
         foregroundColor: Colors.white,
         title: Text(
           'Nueva Consulta - Infantil',

@@ -8,6 +8,7 @@ import 'reportes/reportes_screen.dart';
 import 'pacientes/pacientes_screen.dart';
 import 'ventas/ventas_screen.dart';
 import '../../../utils/venta_estados.dart';
+import 'configuracion_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   @override
@@ -174,86 +175,101 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     color: Colors.white,
-                    child: Row(
-                      children: [
-                        Icon(Icons.menu, color: AppColors.azulReal),
-                        SizedBox(width: 16),
-                        Text(
-                          _titles[_selectedIndex],
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.azulReal,
-                          ),
-                        ),
-                        Spacer(),
-                        // Barra de búsqueda
-                        Container(
-                          width: 300,
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Buscar...',
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: AppColors.azulCobalto,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        // Notificaciones
-                        Stack(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Con la pantalla angosta se oculta el buscador para
+                        // que el título y los íconos de la derecha nunca se
+                        // encimen ni desborden (RenderFlex overflow).
+                        final mostrarBuscador = constraints.maxWidth > 640;
+
+                        return Row(
                           children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.notifications_outlined,
-                                color: AppColors.azulReal,
+                            Icon(Icons.menu, color: AppColors.azulReal),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                _titles[_selectedIndex],
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.azulReal,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
-                              onPressed: () {},
                             ),
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
+                            if (mostrarBuscador) ...[
+                              SizedBox(width: 16),
+                              // Barra de búsqueda
+                              SizedBox(
+                                width: 300,
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Buscar...',
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      color: AppColors.azulCobalto,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[200],
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            SizedBox(width: 16),
+                            // Notificaciones
+                            Stack(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.notifications_outlined,
+                                    color: AppColors.azulReal,
+                                  ),
+                                  onPressed: () {},
+                                ),
+                                Positioned(
+                                  right: 8,
+                                  top: 8,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(width: 8),
+                            // Botón de recargar datos
+                            IconButton(
+                              icon: Icon(Icons.refresh, color: AppColors.azulReal),
+                              onPressed: _cargarDatosDashboard,
+                            ),
+                            SizedBox(width: 8),
+                            // Perfil
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: AppColors.turquesa,
+                              child: Text(
+                                'A',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                        SizedBox(width: 8),
-                        // Botón de recargar datos
-                        IconButton(
-                          icon: Icon(Icons.refresh, color: AppColors.azulReal),
-                          onPressed: _cargarDatosDashboard,
-                        ),
-                        SizedBox(width: 8),
-                        // Perfil
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: AppColors.turquesa,
-                          child: Text(
-                            'A',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
 
@@ -276,25 +292,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
             : Colors.transparent,
         borderRadius: BorderRadius.horizontal(right: Radius.circular(30)),
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: _selectedIndex == index ? Colors.white : Colors.white70,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(30)),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: Icon(
+            icon,
             color: _selectedIndex == index ? Colors.white : Colors.white70,
-            fontWeight: _selectedIndex == index
-                ? FontWeight.bold
-                : FontWeight.normal,
           ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: _selectedIndex == index ? Colors.white : Colors.white70,
+              fontWeight: _selectedIndex == index
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+            ),
+          ),
+          onTap: () {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
         ),
-        onTap: () {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
       ),
     );
   }
@@ -621,7 +642,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 child: Icon(icon, color: color),
               ),
-              Text(subtitle, style: TextStyle(fontSize: 12, color: color)),
+              Flexible(
+                child: Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: color),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
             ],
           ),
           Text(
@@ -631,8 +659,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
               fontWeight: FontWeight.bold,
               color: AppColors.azulReal,
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
-          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          Text(
+            title,
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
         ],
       ),
     );
@@ -788,12 +823,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildConfiguracion() {
-    return Center(
-      child: Text(
-        'Configuración - En construcción',
-        style: TextStyle(fontSize: 24, color: Colors.grey),
-      ),
-    );
+    return ConfiguracionScreen();
   }
 
   BoxDecoration _cardDecoration() {

@@ -8,6 +8,8 @@ import '../../../models/reportes/producto_top_model.dart';
 import '../../../widgets/graficas/grafica_barras.dart';
 import '../../../widgets/graficas/grafica_pastel.dart';
 import '../../../services/export_service.dart';
+import '../../../services/producto_service.dart';
+import '../../../models/productos/producto_model.dart';
 
 class ReportesScreen extends StatefulWidget {
   @override
@@ -28,6 +30,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
   List<ProductoTop> _productosTop = [];
   List<dynamic> _productosBajoStock = [];
   Map<String, dynamic> _ventasPorEmpleado = {};
+  List<Producto> _productos = [];
 
   final DateFormat _formatter = DateFormat('dd/MM/yyyy');
   final NumberFormat _moneda = NumberFormat.currency(locale: 'es_MX', symbol: '\$');
@@ -111,6 +114,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
         _cargarProductosTop(),
         _cargarProductosBajoStock(),
         _cargarVentasPorEmpleado(),
+        _cargarProductos(),
       ]);
 
       setState(() {
@@ -167,6 +171,41 @@ class _ReportesScreenState extends State<ReportesScreen> {
     setState(() {
       _ventasPorEmpleado = ventas;
     });
+  }
+
+  Future<void> _cargarProductos() async {
+    final productos = await ProductoService.getProductos();
+    setState(() {
+      _productos = productos;
+    });
+  }
+
+  List<Producto> get _productosActivos => _productos.where((p) => p.activo).toList();
+
+  double get _valorInventarioCosto =>
+      _productosActivos.fold(0.0, (s, p) => s + p.stock * p.precioCompra);
+
+  double get _valorInventarioVenta =>
+      _productosActivos.fold(0.0, (s, p) => s + p.stock * p.precioVenta);
+
+  Future<void> _exportarInventarioPDF() async {
+    try {
+      await ExportService.exportarInventarioPDF(productos: _productos);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al exportar inventario: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _exportarInventarioExcel() async {
+    try {
+      await ExportService.exportarInventarioExcel(productos: _productos);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al exportar inventario: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> _seleccionarRangoFechas() async {
@@ -313,6 +352,10 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
                             // Tablas de datos
                             _buildTablasDatos(),
+                            SizedBox(height: 24),
+
+                            // Inventario (no depende del rango de fechas)
+                            _buildSeccionInventario(),
                           ],
                         ),
                       ),
@@ -695,6 +738,112 @@ class _ReportesScreenState extends State<ReportesScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSeccionInventario() {
+    final activos = _productosActivos;
+    final unidades = activos.fold<int>(0, (s, p) => s + p.stock);
+    final valorCosto = _valorInventarioCosto;
+    final valorVenta = _valorInventarioVenta;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.inventory_2, color: AppColors.azulReal),
+                    SizedBox(width: 8),
+                    Text(
+                      'Inventario',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.azulReal,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _productos.isEmpty ? null : _exportarInventarioPDF,
+                      icon: Icon(Icons.picture_as_pdf, color: Colors.red, size: 18),
+                      label: Text('PDF'),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.red),
+                        foregroundColor: Colors.red,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: _productos.isEmpty ? null : _exportarInventarioExcel,
+                      icon: Icon(Icons.table_chart, color: Colors.green, size: 18),
+                      label: Text('Excel'),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.green),
+                        foregroundColor: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Corte del inventario actual (no depende del rango de fechas de arriba).',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 16),
+            GridView.count(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.8,
+              children: [
+                _buildTarjetaResumen(
+                  'Productos activos',
+                  activos.length.toString(),
+                  Icons.inventory,
+                  Colors.blue,
+                  'en catálogo',
+                ),
+                _buildTarjetaResumen(
+                  'Unidades en stock',
+                  unidades.toString(),
+                  Icons.numbers,
+                  Colors.indigo,
+                  'piezas',
+                ),
+                _buildTarjetaResumen(
+                  'Valor a costo',
+                  _moneda.format(valorCosto),
+                  Icons.attach_money,
+                  Colors.orange,
+                  'inversión',
+                ),
+                _buildTarjetaResumen(
+                  'Valor a precio venta',
+                  _moneda.format(valorVenta),
+                  Icons.sell,
+                  Colors.green,
+                  'potencial',
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

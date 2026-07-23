@@ -69,7 +69,8 @@ class _VentasListaTipoScreenState extends State<VentasListaTipoScreen> {
           backgroundColor: Colors.grey[100],
           appBar: AppBar(
             elevation: 0,
-            backgroundColor: AppColors.azulReal,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: Container(decoration: BoxDecoration(gradient: AppColors.appBarGradient)),
             foregroundColor: Colors.white,
             title: Text(_tipoTitulo(widget.tipo)),
           ),

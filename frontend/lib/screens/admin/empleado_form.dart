@@ -26,6 +26,23 @@ class _EmpleadoFormState extends State<EmpleadoForm> {
   bool _isEditing = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _restablecerPassword = false;
+
+  String? _validarPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'La contraseña es requerida';
+    }
+    if (value.length < 8) {
+      return 'Mínimo 8 caracteres';
+    }
+    if (!RegExp(r'[A-Za-z]').hasMatch(value)) {
+      return 'Debe incluir al menos una letra';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return 'Debe incluir al menos un número';
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -64,6 +81,8 @@ class _EmpleadoFormState extends State<EmpleadoForm> {
 
       if (!_isEditing) {
         empleadoData['password'] = _passwordController.text.trim();
+      } else if (_restablecerPassword) {
+        empleadoData['password'] = _passwordController.text.trim();
       }
 
       if (_isEditing) {
@@ -99,7 +118,8 @@ class _EmpleadoFormState extends State<EmpleadoForm> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.azulReal,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: BoxDecoration(gradient: AppColors.appBarGradient)),
         foregroundColor: Colors.white,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +141,7 @@ class _EmpleadoFormState extends State<EmpleadoForm> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w300,
-                color: Colors.grey[600],
+                color: Colors.white70,
               ),
             ),
           ],
@@ -251,15 +271,7 @@ class _EmpleadoFormState extends State<EmpleadoForm> {
                           });
                         },
                         obscureText: _obscurePassword,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'La contraseña es requerida';
-                          }
-                          if (value.length < 6) {
-                            return 'Mínimo 6 caracteres';
-                          }
-                          return null;
-                        },
+                        validator: _validarPassword,
                       ),
 
                       // Confirmar contraseña
@@ -286,6 +298,77 @@ class _EmpleadoFormState extends State<EmpleadoForm> {
                           return null;
                         },
                       ),
+                    ],
+
+                    // Restablecer contraseña (solo al editar)
+                    if (_isEditing) ...[
+                      SizedBox(height: 16),
+                      Divider(),
+                      SizedBox(height: 8),
+                      CheckboxListTile(
+                        value: _restablecerPassword,
+                        onChanged: (value) {
+                          setState(() {
+                            _restablecerPassword = value ?? false;
+                            if (!_restablecerPassword) {
+                              _passwordController.clear();
+                              _confirmPasswordController.clear();
+                            }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Restablecer contraseña',
+                          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                        ),
+                        subtitle: Text(
+                          'Úsalo si el empleado olvidó su contraseña de acceso',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ),
+                      if (_restablecerPassword) ...[
+                        SizedBox(height: 8),
+                        CustomTextField(
+                          controller: _passwordController,
+                          label: 'Nueva contraseña',
+                          prefixIcon: Icons.lock_outline,
+                          suffixIcon: _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          onSuffixTap: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          obscureText: _obscurePassword,
+                          validator: _restablecerPassword ? _validarPassword : null,
+                        ),
+                        CustomTextField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirmar nueva contraseña',
+                          prefixIcon: Icons.lock_outline,
+                          suffixIcon: _obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          onSuffixTap: () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          },
+                          obscureText: _obscureConfirmPassword,
+                          validator: (value) {
+                            if (!_restablecerPassword) return null;
+                            if (value == null || value.isEmpty) {
+                              return 'Confirma la nueva contraseña';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Las contraseñas no coinciden';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
                     ],
                   ],
                 ),

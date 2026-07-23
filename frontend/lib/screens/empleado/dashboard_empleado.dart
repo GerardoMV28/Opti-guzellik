@@ -158,15 +158,18 @@ class _EmpleadoDashboardState extends State<EmpleadoDashboard> {
                       children: [
                         Icon(Icons.menu, color: AppColors.azulReal),
                         SizedBox(width: 16),
-                        Text(
-                          _titles[_selectedIndex],
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.azulReal,
+                        Expanded(
+                          child: Text(
+                            _titles[_selectedIndex],
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.azulReal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
-                        Spacer(),
                         // Indicador de rol
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -228,27 +231,32 @@ class _EmpleadoDashboardState extends State<EmpleadoDashboard> {
             : Colors.transparent,
         borderRadius: BorderRadius.horizontal(right: Radius.circular(30)),
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: _selectedIndex == index ? Colors.white : Colors.white70,
-          size: 22,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(30)),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: Icon(
+            icon,
             color: _selectedIndex == index ? Colors.white : Colors.white70,
-            fontWeight: _selectedIndex == index
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontSize: 14,
+            size: 22,
           ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: _selectedIndex == index ? Colors.white : Colors.white70,
+              fontWeight: _selectedIndex == index
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              fontSize: 14,
+            ),
+          ),
+          onTap: () {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
         ),
-        onTap: () {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
       ),
     );
   }

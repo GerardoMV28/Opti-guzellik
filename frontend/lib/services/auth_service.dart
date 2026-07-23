@@ -151,4 +151,45 @@ class AuthService {
   static Future<void> logout() async {
     await AuthStorage.clearSession();
   }
+
+  static Future<Map<String, dynamic>> changePassword(
+    String passwordActual,
+    String passwordNueva,
+  ) async {
+    final token = await AuthStorage.getToken();
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/auth/cambiar-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'passwordActual': passwordActual,
+          'passwordNueva': passwordNueva,
+        }),
+      );
+
+      Map<String, dynamic>? data;
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          data = decoded;
+        }
+      } on FormatException {
+        return {'success': false, 'message': 'Respuesta del servidor no válida'};
+      }
+
+      if (response.statusCode == 200) {
+        return {'success': true};
+      }
+
+      return {
+        'success': false,
+        'message': _messageFromBody(response.statusCode, data),
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión con el servidor'};
+    }
+  }
 }

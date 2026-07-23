@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/colors.dart';
 import '../../../services/producto_service.dart';
 import '../../../models/productos/producto_model.dart';
+import '../../../widgets/forms/form_card.dart';
 import 'producto_form.dart';
 
 class ProductosScreen extends StatefulWidget {
@@ -315,20 +316,17 @@ class _ProductosScreenState extends State<ProductosScreen> {
   }
 
   Widget _buildProductoCard(Producto producto) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: producto.activo
-              ? null
-              : Border.all(color: Colors.grey.shade300),
-        ),
-        child: ListTile(
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: FormCard(
+        padding: EdgeInsets.zero,
+        child: Container(
+          decoration: BoxDecoration(
+            border: producto.activo
+                ? null
+                : Border.all(color: Colors.grey.shade300),
+          ),
+          child: ListTile(
           contentPadding: EdgeInsets.all(16),
           leading: Container(
             width: 60,
@@ -482,6 +480,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
               }
             },
           ),
+        ),
         ),
       ),
     );

@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthStorage {
   static const String _tokenKey = 'token';
   static const String _userDataKey = 'user_data';
+  static const String _recentEmailsKey = 'recent_emails';
+  static const int _maxRecentEmails = 5;
 
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -39,5 +41,26 @@ class AuthStorage {
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;
+  }
+
+  static Future<List<String>> getRecentEmails() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_recentEmailsKey) ?? [];
+  }
+
+  static Future<void> addRecentEmail(String email) async {
+    final correo = email.trim().toLowerCase();
+    if (correo.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final actuales = prefs.getStringList(_recentEmailsKey) ?? [];
+
+    actuales.removeWhere((e) => e.toLowerCase() == correo);
+    actuales.insert(0, correo);
+
+    await prefs.setStringList(
+      _recentEmailsKey,
+      actuales.take(_maxRecentEmails).toList(),
+    );
   }
 }

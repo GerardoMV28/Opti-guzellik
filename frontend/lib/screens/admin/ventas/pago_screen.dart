@@ -35,6 +35,7 @@ class _PagoScreenState extends State<PagoScreen> {
   String _formaPago = 'efectivo';
   double _anticipo = 0;
   double _saldoPendiente = 0;
+  double _cambio = 0;
   DateTime? _fechaEntrega;
   String _estado = 'por_enviar';
   String? _pacienteId;
@@ -201,8 +202,15 @@ class _PagoScreenState extends State<PagoScreen> {
   }
 
   void _recalcularSaldoInterno() {
+    _cambio = 0;
     if (_formaPago == 'efectivo') {
-      _anticipo = double.tryParse(_montoEfectivoController.text) ?? 0;
+      final recibido = double.tryParse(_montoEfectivoController.text) ?? 0;
+      if (recibido > _total) {
+        _anticipo = _total;
+        _cambio = _round2(recibido - _total);
+      } else {
+        _anticipo = recibido;
+      }
       _saldoPendiente = _total - _anticipo;
     } else if (_formaPago == 'tarjeta') {
       _anticipo = double.tryParse(_montoTarjetaController.text) ?? 0;
@@ -215,7 +223,13 @@ class _PagoScreenState extends State<PagoScreen> {
       final tarjeta = double.tryParse(_montoTarjetaController.text) ?? 0;
       final transferencia =
           double.tryParse(_montoTransferenciaController.text) ?? 0;
-      _anticipo = efectivo + tarjeta + transferencia;
+      final recibidoTotal = efectivo + tarjeta + transferencia;
+      if (recibidoTotal > _total) {
+        // El cambio solo puede salir de lo recibido en efectivo.
+        final excedente = _round2(recibidoTotal - _total);
+        _cambio = excedente <= efectivo ? excedente : efectivo;
+      }
+      _anticipo = recibidoTotal - _cambio;
       _saldoPendiente = _total - _anticipo;
     }
     if (_saldoPendiente < 0) _saldoPendiente = 0;
@@ -279,6 +293,7 @@ class _PagoScreenState extends State<PagoScreen> {
         total: venta.total,
         anticipo: venta.anticipo,
         saldoPendiente: venta.saldoPendiente,
+        cambio: _cambio,
         formaPago: venta.formaPago,
         detallePagoMixto: venta.detallePagoMixto,
         fechaEntrega: venta.fechaEntrega,
@@ -342,6 +357,8 @@ class _PagoScreenState extends State<PagoScreen> {
                     _buildDetalleVenta('Anticipo', _moneda.format(venta.anticipo)),
                     if (venta.saldoPendiente > 0)
                       _buildDetalleVenta('Saldo pendiente', _moneda.format(venta.saldoPendiente), isSaldo: true),
+                    if (_cambio > 0)
+                      _buildDetalleVenta('Cambio a entregar', _moneda.format(_cambio), isSaldo: true),
                     _buildDetalleVenta('Forma de pago', _getFormaPagoEspanol(venta.formaPago)),
                     if (venta.fechaEntrega != null)
                       _buildDetalleVenta('Fecha entrega', DateFormat('dd/MM/yyyy').format(venta.fechaEntrega!)),
@@ -658,7 +675,8 @@ class _PagoScreenState extends State<PagoScreen> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.azulReal,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: BoxDecoration(gradient: AppColors.appBarGradient)),
         foregroundColor: Colors.white,
         title: Text('Finalizar Venta'),
       ),
@@ -881,6 +899,40 @@ class _PagoScreenState extends State<PagoScreen> {
                               Text(
                                 '¡Pago completado! No hay saldo pendiente.',
                                 style: TextStyle(color: Colors.green, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (_cambio > 0) ...[
+                        SizedBox(height: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.turquesa.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.turquesa.withOpacity(0.4)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.money, color: AppColors.azulReal, size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Cambio a entregar',
+                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                _moneda.format(_cambio),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: AppColors.azulReal,
+                                ),
                               ),
                             ],
                           ),

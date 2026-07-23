@@ -8,6 +8,8 @@ import '../../../models/ventas/venta_model.dart';
 import '../../../widgets/ventas/registro_abono_dialog.dart';
 import '../../../services/export_service.dart';
 import '../../../utils/venta_estados.dart';
+import 'editar_paciente_form.dart';
+import '../../../utils/whatsapp_helper.dart';
 
 class PacienteDetalleScreen extends StatefulWidget {
   final Paciente paciente;
@@ -34,7 +36,8 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.azulReal,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: BoxDecoration(gradient: AppColors.appBarGradient)),
         foregroundColor: Colors.white,
         title: Text(
           'Detalle del Paciente',
@@ -43,14 +46,13 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Edición de datos - En desarrollo'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            },
+            tooltip: 'Editar datos',
+            onPressed: _editarPaciente,
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline),
+            tooltip: 'Eliminar paciente',
+            onPressed: _eliminarPaciente,
           ),
         ],
       ),
@@ -118,6 +120,16 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
                         ],
                       ),
                     ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.chat, color: Color(0xFF25D366)),
+                  tooltip: 'Contactar por WhatsApp',
+                  iconSize: 32,
+                  onPressed: () => WhatsAppHelper.contactar(
+                    context,
+                    telefono: _paciente.telefono,
+                    nombre: _paciente.nombre,
                   ),
                 ),
               ],
@@ -1665,6 +1677,61 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
     
     if (result == true) {
       _recargarPaciente();
+    }
+  }
+
+  Future<void> _editarPaciente() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditarPacienteForm(paciente: _paciente),
+      ),
+    );
+    if (result == true) {
+      _recargarPaciente();
+    }
+  }
+
+  Future<void> _eliminarPaciente() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Eliminar Paciente'),
+        content: Text('¿Estás seguro de eliminar a ${_paciente.nombre}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await PacienteService.deletePaciente(_paciente.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Paciente eliminado correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

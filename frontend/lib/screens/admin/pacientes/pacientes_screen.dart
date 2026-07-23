@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/colors.dart';
 import '../../../services/paciente_service.dart';
 import '../../../models/pacientes/paciente_model.dart';
+import '../../../utils/whatsapp_helper.dart';
+import '../../../widgets/forms/form_card.dart';
 import 'registro_paciente_consulta.dart';
 import 'paciente_detalle_screen.dart'; // ← Este SÍ lo necesitas para ver detalle
 
@@ -71,13 +73,16 @@ class _PacientesScreenState extends State<PacientesScreen> {
     }
   }
 
-  void _verDetalle(Paciente paciente) {
-    Navigator.push(
+  void _verDetalle(Paciente paciente) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PacienteDetalleScreen(paciente: paciente),
       ),
     );
+    if (result == true) {
+      _cargarPacientes();
+    }
   }
 
   Future<void> _eliminarPaciente(Paciente paciente) async {
@@ -273,10 +278,10 @@ class _PacientesScreenState extends State<PacientesScreen> {
   }
 
   Widget _buildPacienteCard(Paciente paciente) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: FormCard(
+      padding: EdgeInsets.zero,
       child: ListTile(
         contentPadding: EdgeInsets.all(16),
         leading: CircleAvatar(
@@ -348,32 +353,47 @@ class _PacientesScreenState extends State<PacientesScreen> {
             ),
           ],
         ),
-        trailing: PopupMenuButton(
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'ver',
-              child: ListTile(
-                leading: Icon(Icons.visibility, color: AppColors.azulCobalto),
-                title: Text('Ver detalles'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(Icons.chat, color: Color(0xFF25D366)),
+              tooltip: 'Contactar por WhatsApp',
+              onPressed: () => WhatsAppHelper.contactar(
+                context,
+                telefono: paciente.telefono,
+                nombre: paciente.nombre,
               ),
             ),
-            PopupMenuItem(
-              value: 'eliminar',
-              child: ListTile(
-                leading: Icon(Icons.delete, color: Colors.red),
-                title: Text('Eliminar'),
-              ),
+            PopupMenuButton(
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'ver',
+                  child: ListTile(
+                    leading: Icon(Icons.visibility, color: AppColors.azulCobalto),
+                    title: Text('Ver detalles'),
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'eliminar',
+                  child: ListTile(
+                    leading: Icon(Icons.delete, color: Colors.red),
+                    title: Text('Eliminar'),
+                  ),
+                ),
+              ],
+              onSelected: (value) {
+                if (value == 'ver') {
+                  _verDetalle(paciente);
+                } else if (value == 'eliminar') {
+                  _eliminarPaciente(paciente);
+                }
+              },
             ),
           ],
-          onSelected: (value) {
-            if (value == 'ver') {
-              _verDetalle(paciente);
-            } else if (value == 'eliminar') {
-              _eliminarPaciente(paciente);
-            }
-          },
         ),
         onTap: () => _verDetalle(paciente),
+      ),
       ),
     );
   }
