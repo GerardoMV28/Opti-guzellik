@@ -1,21 +1,41 @@
 const Producto = require('../models/Producto');
 
+// Evita que caracteres especiales de regex (o un objeto inyectado vía query
+// string, ej. ?search[$gt]=) rompan la búsqueda o disparen un patrón costoso.
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Solo estos campos pueden llegar a Mongo desde el body: evita que un cliente
+// mande operadores ($set, $unset, $rename, etc.) que Mongoose aplicaría tal cual.
+const CAMPOS_PRODUCTO = [
+  'tipo', 'codigo', 'nombre', 'descripcion', 'marca', 'modelo', 'imagenes',
+  'precios', 'stock', 'stock_minimo', 'armazon', 'mica', 'lente_contacto',
+];
+
+function pickProductoData(body) {
+  const data = {};
+  for (const campo of CAMPOS_PRODUCTO) {
+    if (body[campo] !== undefined) data[campo] = body[campo];
+  }
+  return data;
+}
+
 // Obtener todos los productos (con filtros opcionales)
 exports.getProductos = async (req, res) => {
-  try {    
+  try {
     const { tipo, activo, search } = req.query;
     let filtro = {};
-    
+
     // Aplicar filtros si existen
     if (tipo) filtro.tipo = tipo;
     if (activo !== undefined) filtro.activo = activo === 'true';
-    
+
     // Búsqueda por texto en nombre, código o marca
-    if (search) {
+    if (search && typeof search === 'string') {
+      const term = escapeRegex(search);
       filtro.$or = [
-        { nombre: { $regex: search, $options: 'i' } },
-        { codigo: { $regex: search, $options: 'i' } },
-        { marca: { $regex: search, $options: 'i' } }
+        { nombre: { $regex: term, $options: 'i' } },
+        { codigo: { $regex: term, $options: 'i' } },
+        { marca: { $regex: term, $options: 'i' } }
       ];
     }
 
@@ -65,7 +85,7 @@ exports.createProducto = async (req, res) => {
     }
     
     const producto = new Producto({
-      ...req.body,
+      ...pickProductoData(req.body),
       fecha_modificacion: new Date()
     });
     
@@ -93,7 +113,7 @@ exports.updateProducto = async (req, res) => {
     
     const producto = await Producto.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, fecha_modificacion: new Date() },
+      { ...pickProductoData(req.body), fecha_modificacion: new Date() },
       { new: true, runValidators: true }
     );
     

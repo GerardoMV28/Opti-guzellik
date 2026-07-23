@@ -95,6 +95,31 @@ exports.login = async (req, res) => {
   }
 };
 
+// Cambiar la propia contraseña (usuario autenticado)
+exports.changePassword = async (req, res) => {
+  try {
+    const { passwordActual, passwordNueva } = req.body;
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const isMatch = await bcrypt.compare(passwordActual, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'La contraseña actual es incorrecta' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(passwordNueva, salt);
+    await user.save();
+
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Verificar token (para mantener sesión)
 exports.verifyToken = async (req, res) => {
   try {

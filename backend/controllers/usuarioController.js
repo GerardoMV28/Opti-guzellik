@@ -63,19 +63,28 @@ exports.createUsuario = async (req, res) => {
 // Actualizar usuario
 exports.updateUsuario = async (req, res) => {
   try {
-    const { nombre, email, rol, telefono, activo } = req.body;
-    
+    const { nombre, email, rol, telefono, activo, password } = req.body;
+
+    const datosActualizar = { nombre, email, rol, telefono, activo };
+
+    // La contraseña es opcional en la edición: solo se toca si el admin
+    // decide restablecerla (no hay recuperación por correo en este sistema).
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      datosActualizar.password = await bcrypt.hash(password, salt);
+    }
+
     // Buscar y actualizar
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { nombre, email, rol, telefono, activo },
+      datosActualizar,
       { new: true }
     ).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-    
+
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -101,7 +110,8 @@ async function bloqueaUltimoAdmin(idObjetivo, req) {
   return null;
 }
 
-// Eliminar usuario (soft delete - desactivar)
+// Eliminar usuario permanentemente (uso: limpiar cuentas de prueba).
+// Es irreversible a propósito: para solo desactivar sin borrar, usar toggleActivo.
 exports.deleteUsuario = async (req, res) => {
   try {
     const bloqueo = await bloqueaUltimoAdmin(req.params.id, req);
@@ -109,17 +119,13 @@ exports.deleteUsuario = async (req, res) => {
       return res.status(400).json({ message: bloqueo });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { activo: false },
-      { new: true }
-    ).select('-password');
+    const user = await User.findByIdAndDelete(req.params.id).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    res.json({ message: 'Usuario desactivado correctamente', user });
+    res.json({ message: 'Usuario eliminado permanentemente', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

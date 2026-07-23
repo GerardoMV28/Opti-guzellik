@@ -1,5 +1,22 @@
 const Paciente = require('../models/Paciente');
 
+// Evita que caracteres especiales de regex (o un objeto inyectado vía query
+// string, ej. ?q[$gt]=) rompan la búsqueda o disparen un patrón costoso.
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Solo estos campos pueden llegar a Mongo desde el body: evita que un cliente
+// mande operadores ($set, $unset, $rename, etc.) que Mongoose aplicaría tal cual.
+// 'consultas', 'ventas' y 'activo' se manejan por sus propios endpoints.
+const CAMPOS_PACIENTE = ['nombre', 'telefono', 'direccion', 'edad', 'como_se_entero', 'observaciones'];
+
+function pickPacienteData(body) {
+  const data = {};
+  for (const campo of CAMPOS_PACIENTE) {
+    if (body[campo] !== undefined) data[campo] = body[campo];
+  }
+  return data;
+}
+
 // Obtener todos los pacientes
 exports.getPacientes = async (req, res) => {
   try {
@@ -28,7 +45,7 @@ exports.getPacienteById = async (req, res) => {
 // Crear paciente
 exports.createPaciente = async (req, res) => {
   try {
-    const paciente = new Paciente(req.body);
+    const paciente = new Paciente(pickPacienteData(req.body));
     const nuevoPaciente = await paciente.save();
     res.status(201).json(nuevoPaciente);
   } catch (error) {
@@ -42,7 +59,7 @@ exports.updatePaciente = async (req, res) => {
   try {
     const paciente = await Paciente.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      pickPacienteData(req.body),
       { new: true, runValidators: true }
     );
     if (!paciente) {
@@ -77,11 +94,14 @@ exports.deletePaciente = async (req, res) => {
 exports.buscarPacientes = async (req, res) => {
   try {
     const { q } = req.query;
+    if (!q || typeof q !== 'string') {
+      return res.json([]);
+    }
+    const term = escapeRegex(q);
     const pacientes = await Paciente.find({
       $or: [
-        { nombre: { $regex: q, $options: 'i' } },
-        { telefono: { $regex: q, $options: 'i' } },
-        { email: { $regex: q, $options: 'i' } }
+        { nombre: { $regex: term, $options: 'i' } },
+        { telefono: { $regex: term, $options: 'i' } },
       ],
       activo: true
     }).limit(20);

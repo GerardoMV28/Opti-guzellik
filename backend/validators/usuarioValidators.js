@@ -71,6 +71,16 @@ const updateUsuarioValidators = [
     .optional()
     .isBoolean()
     .withMessage('Activo debe ser verdadero o falso'),
+  body('password')
+    .optional({ values: 'falsy' })
+    .isString()
+    .withMessage('Contraseña inválida')
+    .isLength({ min: 8, max: 128 })
+    .withMessage('La contraseña debe tener entre 8 y 128 caracteres')
+    .matches(/[A-Za-z]/)
+    .withMessage('La contraseña debe incluir al menos una letra')
+    .matches(/[0-9]/)
+    .withMessage('La contraseña debe incluir al menos un número'),
 ];
 
 module.exports = { createUsuarioValidators, updateUsuarioValidators };
