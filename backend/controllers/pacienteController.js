@@ -113,12 +113,31 @@ exports.buscarPacientes = async (req, res) => {
 };
 
 // Agregar consulta a paciente
+const CAMPOS_CONSULTA = [
+  'fecha', 'especialista', 'motivoConsulta', 'tipoPaciente', 'sintomas',
+  'antecedentes', 'avTabla', 'rxAnterior', 'coverTest', 'movimientosOculares',
+  'saludOcular', 'oftalmoscopia', 'subjetivo', 'dnpAltura', 'puntosWorth',
+  'rxFinal', 'diagnostico', 'recomendaciones', 'notasAdicionales',
+  'productosRecetados', 'esRevision', 'agudezaVisual', 'padreTutor', 'edad',
+  'telefono', 'sexo', 'anioEscolar', 'sintomasInfante', 'tipoParto',
+  'complicaciones', 'estrabismoFamiliar', 'lazoFamiliar', 'golpeOjos',
+  'especifiqueGolpe', 'antecedentesInfante', 'ultimoExamen', 'equilibrioPie',
+  'requiereTerapia', 'tratamientoPatologia',
+];
+
+function pickConsultaData(body) {
+  const data = {};
+  for (const campo of CAMPOS_CONSULTA) {
+    if (body[campo] !== undefined) data[campo] = body[campo];
+  }
+  return data;
+}
+
 exports.addConsulta = async (req, res) => {
   try {
     if (!req.body.fecha || !req.body.especialista || !req.body.motivoConsulta) {
       return res.status(400).json({ 
-        message: 'Faltan campos requeridos',
-        recibido: req.body 
+        message: 'Faltan campos requeridos (fecha, especialista, motivoConsulta)'
       });
     }
     
@@ -127,12 +146,11 @@ exports.addConsulta = async (req, res) => {
       return res.status(404).json({ message: 'Paciente no encontrado' });
     }
     
-    paciente.consultas.push(req.body);
+    paciente.consultas.push(pickConsultaData(req.body));
     await paciente.save();
     
     res.json(paciente);
   } catch (error) {
-
-    res.status(400).json({ message: error.message, stack: error.stack });
+    res.status(400).json({ message: error.message });
   }
 };

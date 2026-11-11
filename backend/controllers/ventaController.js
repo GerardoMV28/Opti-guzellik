@@ -88,10 +88,24 @@ exports.createVenta = async (req, res) => {
       }
       
       const stockActual = producto.stock;
+      const cantidadSolicitada = parseInt(item.cantidad, 10) || 0;
+      if (cantidadSolicitada <= 0) {
+        return res.status(400).json({
+          message: `Cantidad inválida para ${producto.nombre}`
+        });
+      }
       
-      if (stockActual < item.cantidad) {
+      if (stockActual < cantidadSolicitada) {
         return res.status(400).json({ 
-          message: `Stock insuficiente para ${item.nombre}. Disponible: ${stockActual}, Solicitado: ${item.cantidad}` 
+          message: `Stock insuficiente para ${item.nombre}. Disponible: ${stockActual}, Solicitado: ${cantidadSolicitada}` 
+        });
+      }
+
+      const precioDB = parseFloat(producto.precios?.precio_venta) || 0;
+      const precioCliente = parseFloat(item.precio_unitario);
+      if (precioDB > 0 && !isNaN(precioCliente) && Math.abs(precioCliente - precioDB) > 0.05) {
+        return res.status(400).json({
+          message: `El precio unitario de ${producto.nombre} no coincide con el precio registrado en el catálogo`
         });
       }
       
@@ -100,8 +114,8 @@ exports.createVenta = async (req, res) => {
         id: item.producto_id,
         nombre: producto.nombre,
         stockActual: stockActual,
-        cantidad: item.cantidad,
-        nuevoStock: stockActual - item.cantidad
+        cantidad: cantidadSolicitada,
+        nuevoStock: stockActual - cantidadSolicitada
       });
     }
     
@@ -278,14 +292,31 @@ exports.updatePago = async (req, res) => {
   try {
     const { anticipo } = req.body;
     const { id } = req.params;
+    const montoNum = typeof anticipo === 'number' ? anticipo : parseFloat(anticipo);
+    if (isNaN(montoNum) || montoNum <= 0) {
+      return res.status(400).json({ message: 'Monto de abono inválido' });
+    }
     
     const venta = await Venta.findById(id);
     if (!venta) {
       return res.status(404).json({ message: 'Venta no encontrada' });
     }
     
-    venta.anticipo += anticipo;
-    venta.saldo_pendiente = venta.total - venta.anticipo;
+    const anticipoActual = parseFloat(venta.anticipo?.toString() || '0');
+    const saldoActual = parseFloat(venta.saldo_pendiente?.toString() || '0');
+    const totalVenta = parseFloat(venta.total?.toString() || '0');
+
+    if (saldoActual < montoNum) {
+      return res.status(400).json({
+        message: `El saldo pendiente es ${saldoActual}. No se puede abonar más de lo debido.`
+      });
+    }
+
+    const nuevoAnticipo = anticipoActual + montoNum;
+    const nuevoSaldo = totalVenta - nuevoAnticipo;
+
+    venta.anticipo = nuevoAnticipo;
+    venta.saldo_pendiente = nuevoSaldo < 0 ? 0 : nuevoSaldo;
     
     if (venta.saldo_pendiente <= 0) {
       venta.saldo_pendiente = 0;

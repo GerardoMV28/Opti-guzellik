@@ -32,8 +32,8 @@ exports.verificarToken = async (req, res, next) => {
     }
     
     req.user = user;
-    req.userId = decoded.id;
-    req.userRol = decoded.rol;
+    req.userId = user._id.toString();
+    req.userRol = user.rol;
     
     next();
   } catch (error) {
