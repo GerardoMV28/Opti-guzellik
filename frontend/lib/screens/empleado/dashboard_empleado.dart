@@ -7,6 +7,8 @@ import 'clientes/registro_cliente_empleado.dart';
 import 'clientes/lista_clientes_empleado.dart'; // ✅ Agregar esta importación
 import '../admin/ventas/ventas_screen.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/chatbot/chatbot_fab.dart';
+import '../../widgets/chatbot/chatbot_dialog.dart';
 
 class EmpleadoDashboard extends StatefulWidget {
   @override
@@ -195,6 +197,26 @@ class _EmpleadoDashboardState extends State<EmpleadoDashboard> {
                           ),
                         ),
                         SizedBox(width: 16),
+                        // Asistente Virtual Bot
+                        Tooltip(
+                          message: 'Asistente Virtual Güzellik',
+                          child: IconButton(
+                            icon: Icon(Icons.smart_toy_outlined, color: AppColors.azulReal),
+                            onPressed: () {
+                              ChatbotDialog.show(
+                                context,
+                                isAdmin: false,
+                                userName: _nombreEmpleado,
+                                onNavigate: (index) {
+                                  setState(() {
+                                    _selectedIndex = index;
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 8),
                         // Perfil
                         CircleAvatar(
                           radius: 18,
@@ -219,6 +241,15 @@ class _EmpleadoDashboardState extends State<EmpleadoDashboard> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: ChatbotFloatingButton(
+        isAdmin: false,
+        userName: _nombreEmpleado,
+        onNavigate: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }

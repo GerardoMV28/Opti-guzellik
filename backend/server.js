@@ -1,9 +1,6 @@
 require('dotenv').config();
 
-// En algunas configuraciones de Windows, el resolver de DNS de Node.js no
-// logra consultar registros SRV (usados por las URI mongodb+srv:// de
-// Atlas), aunque herramientas como mongosh sí puedan. Forzar un DNS público
-// conocido evita el error "querySrv ECONNREFUSED" al conectar con Atlas.
+const dns = require('dns');
 require('dns').setServers(['8.8.8.8', '8.8.4.4']);
 
 const { assertRequiredEnv } = require('./middleware/envGuard');

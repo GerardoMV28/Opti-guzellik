@@ -28,6 +28,7 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
   void initState() {
     super.initState();
     _paciente = widget.paciente;
+    _recargarPaciente();
   }
 
   @override
@@ -314,19 +315,6 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
   }
 
   Widget _buildCompras() {
-    if (_paciente.ventas.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No hay compras registradas', style: TextStyle(fontSize: 18, color: Colors.grey)),
-          ],
-        ),
-      );
-    }
-
     return FutureBuilder<List<Venta>>(
       future: _cargarVentas(),
       builder: (context, snapshot) {
@@ -357,7 +345,7 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
               children: [
                 Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
-                Text('No hay compras registradas'),
+                Text('No hay compras registradas', style: TextStyle(fontSize: 18, color: Colors.grey)),
               ],
             ),
           );
@@ -377,14 +365,34 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
 
   Future<List<Venta>> _cargarVentas() async {
     List<Venta> ventas = [];
-    for (final ventaId in _paciente.ventas) {
+    final Set<String> idsYaCargados = {};
+
+    // 1. Cargar directamente por pacienteId desde el backend (trae todas las ventas del paciente)
+    if (_paciente.id.isNotEmpty) {
       try {
-        final venta = await VentaService.getVentaById(ventaId);
-        ventas.add(venta);
+        final ventasApi = await VentaService.getVentasByPaciente(_paciente.id);
+        for (final v in ventasApi) {
+          ventas.add(v);
+          if (v.id != null) idsYaCargados.add(v.id!);
+        }
       } catch (e) {
-        print('Error cargando venta $ventaId: $e');
+        print('Error cargando ventas por pacienteId: $e');
       }
     }
+
+    // 2. Complementar con IDs que puedan estar en _paciente.ventas
+    for (final ventaId in _paciente.ventas) {
+      if (!idsYaCargados.contains(ventaId)) {
+        try {
+          final venta = await VentaService.getVentaById(ventaId);
+          ventas.add(venta);
+          if (venta.id != null) idsYaCargados.add(venta.id!);
+        } catch (e) {
+          print('Error cargando venta individual $ventaId: $e');
+        }
+      }
+    }
+
     ventas.sort((a, b) => b.fecha.compareTo(a.fecha));
     return ventas;
   }
@@ -1004,21 +1012,25 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    if (venta.detallePagoMixto!['efectivo'] != null && venta.detallePagoMixto!['efectivo']! > 0)
-                      _buildResumenRow('Efectivo', '\$${venta.detallePagoMixto!['efectivo']!.toStringAsFixed(2)}'),
-                    if (venta.detallePagoMixto!['tarjeta'] != null && venta.detallePagoMixto!['tarjeta']! > 0)
-                      _buildResumenRow('Tarjeta', '\$${venta.detallePagoMixto!['tarjeta']!.toStringAsFixed(2)}'),
-                    if (venta.detallePagoMixto!['transferencia'] != null && venta.detallePagoMixto!['transferencia']! > 0)
-                      _buildResumenRow('Transferencia', '\$${venta.detallePagoMixto!['transferencia']!.toStringAsFixed(2)}'),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          
+                    Builder(builder: (_) {
+                      final ef = _parseMixto(venta.detallePagoMixto!['efectivo']);
+                      final ta = _parseMixto(venta.detallePagoMixto!['tarjeta']);
+                      final tr = _parseMixto(venta.detallePagoMixto!['transferencia']);
+                      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        if (ef > 0) _buildResumenRow('Efectivo', '\${ef.toStringAsFixed(2)}'),
+                        if (ta > 0) _buildResumenRow('Tarjeta', '\${ta.toStringAsFixed(2)}'),
+                        if (tr > 0) _buildResumenRow('Transferencia', '\${tr.toStringAsFixed(2)}'),
+                      ]);
+                    }),
+                  ],        // cierre del spread ...[detallePagoMixto]
+                ],          // cierre de children: de Column (Metodo de pago)
+              ),            // cierre de Column
+            ),              // cierre de Padding
+          ),                // cierre de Card (Metodo de pago)
+
           SizedBox(height: 16),
-          
-          // Historial de abonos - CORREGIDO
+
+          // Historial de abonos
           if (venta.historialAbonos != null && venta.historialAbonos!.isNotEmpty)
             Card(
               elevation: 2,
@@ -1827,6 +1839,20 @@ class _PacienteDetalleScreenState extends State<PacienteDetalleScreen> {
     }
   }
 
+
+  // Parsea valor de detalle_pago_mixto (puede llegar como Decimal128 Map o numero)
+  double _parseMixto(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    if (value is Map) {
+      final d = value[r'$numberDecimal'];
+      if (d != null) return double.tryParse(d.toString()) ?? 0.0;
+    }
+    return 0.0;
+  }
   Color _getColorForTipo(String tipo) {
     switch (tipo) {
       case 'armazon':

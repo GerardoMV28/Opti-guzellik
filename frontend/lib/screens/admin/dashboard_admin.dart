@@ -9,6 +9,8 @@ import 'pacientes/pacientes_screen.dart';
 import 'ventas/ventas_screen.dart';
 import '../../../utils/venta_estados.dart';
 import 'configuracion_screen.dart';
+import '../../widgets/chatbot/chatbot_fab.dart';
+import '../../widgets/chatbot/chatbot_dialog.dart';
 
 class AdminDashboard extends StatefulWidget {
   @override
@@ -255,6 +257,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               onPressed: _cargarDatosDashboard,
                             ),
                             SizedBox(width: 8),
+                            // Asistente Virtual Bot
+                            Tooltip(
+                              message: 'Asistente Virtual Güzellik',
+                              child: IconButton(
+                                icon: Icon(Icons.smart_toy_outlined, color: AppColors.azulReal),
+                                onPressed: () {
+                                  ChatbotDialog.show(
+                                    context,
+                                    isAdmin: true,
+                                    userName: 'Administrador',
+                                    onNavigate: (index) {
+                                      setState(() {
+                                        _selectedIndex = index;
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
                             // Perfil
                             CircleAvatar(
                               radius: 20,
@@ -280,6 +302,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: ChatbotFloatingButton(
+        isAdmin: true,
+        userName: 'Administrador',
+        onNavigate: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }

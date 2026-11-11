@@ -210,7 +210,10 @@ class Paciente {
       consultas: (json['consultas'] as List?)
           ?.map((c) => Consulta.fromJson(c))
           .toList() ?? [],
-      ventas: List<String>.from(json['ventas'] ?? []),
+      ventas: (json['ventas'] as List?)?.map((v) {
+            if (v is Map) return (v['_id'] ?? v['id'] ?? '').toString();
+            return v.toString();
+          }).where((id) => id.isNotEmpty).toList() ?? [],
       activo: json['activo'] ?? true,
     );
   }

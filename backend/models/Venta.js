@@ -96,8 +96,76 @@ const ventaSchema = new mongoose.Schema({
   notas: String,
   
   activo: { type: Boolean, default: true }
-}, { 
-  timestamps: { createdAt: 'fecha_creacion', updatedAt: 'fecha_actualizacion' }
+}, {
+  timestamps: { createdAt: 'fecha_creacion', updatedAt: 'fecha_actualizacion' },
+  toJSON: {
+    transform: function(doc, ret) {
+      function convertDecimals(obj) {
+        if (obj === null || obj === undefined) return obj;
+        if (obj.constructor && obj.constructor.name === 'Decimal128') {
+          return parseFloat(obj.toString());
+        }
+        if (obj.constructor && (obj.constructor.name === 'ObjectId' || obj._bsontype === 'ObjectID' || obj._bsontype === 'ObjectId')) {
+          return obj.toString();
+        }
+        if (obj instanceof Date) {
+          return obj.toISOString();
+        }
+        if (Array.isArray(obj)) {
+          return obj.map(convertDecimals);
+        }
+        if (typeof obj === 'object') {
+          if (mongoose.Types.ObjectId.isValid(obj) && typeof obj.toString === 'function' && obj.toString().length === 24) {
+            const str = obj.toString();
+            if (/^[0-9a-fA-F]{24}$/.test(str)) {
+              return str;
+            }
+          }
+          const result = {};
+          for (const key of Object.keys(obj)) {
+            result[key] = convertDecimals(obj[key]);
+          }
+          return result;
+        }
+        return obj;
+      }
+      return convertDecimals(ret);
+    }
+  },
+  toObject: {
+    transform: function(doc, ret) {
+      function convertDecimals(obj) {
+        if (obj === null || obj === undefined) return obj;
+        if (obj.constructor && obj.constructor.name === 'Decimal128') {
+          return parseFloat(obj.toString());
+        }
+        if (obj.constructor && (obj.constructor.name === 'ObjectId' || obj._bsontype === 'ObjectID' || obj._bsontype === 'ObjectId')) {
+          return obj.toString();
+        }
+        if (obj instanceof Date) {
+          return obj.toISOString();
+        }
+        if (Array.isArray(obj)) {
+          return obj.map(convertDecimals);
+        }
+        if (typeof obj === 'object') {
+          if (mongoose.Types.ObjectId.isValid(obj) && typeof obj.toString === 'function' && obj.toString().length === 24) {
+            const str = obj.toString();
+            if (/^[0-9a-fA-F]{24}$/.test(str)) {
+              return str;
+            }
+          }
+          const result = {};
+          for (const key of Object.keys(obj)) {
+            result[key] = convertDecimals(obj[key]);
+          }
+          return result;
+        }
+        return obj;
+      }
+      return convertDecimals(ret);
+    }
+  }
 });
 
 // Generar folio automático antes de guardar

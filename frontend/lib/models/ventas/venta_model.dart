@@ -72,6 +72,19 @@ static double _parseDouble(dynamic value) {
     return DateTime.now();
   }
 
+  // Funcion auxiliar para parsear detalle de pago mixto
+  static Map<String, dynamic>? _parseDetallePagoMixto(dynamic value) {
+    if (value == null) return null;
+    if (value is Map) {
+      return {
+        'efectivo': _parseDouble(value['efectivo']),
+        'tarjeta': _parseDouble(value['tarjeta']),
+        'transferencia': _parseDouble(value['transferencia']),
+      };
+    }
+    return null;
+  }
+
   factory Venta.fromJson(Map<String, dynamic> json) {
     // Parsear productos
     List<VentaProducto> productos = [];
@@ -115,15 +128,38 @@ static double _parseDouble(dynamic value) {
       }).toList();
     }
 
+    // Parsear vendedor y paciente de forma segura (pueden venir poblados como Map o como String)
+    String? vendedorId;
+    String vendedor = json['vendedor']?.toString() ?? '';
+    if (json['vendedor_id'] is Map) {
+      vendedorId = json['vendedor_id']['_id']?.toString() ?? json['vendedor_id']['id']?.toString();
+      if (vendedor.isEmpty) {
+        vendedor = json['vendedor_id']['nombre']?.toString() ?? '';
+      }
+    } else if (json['vendedor_id'] != null) {
+      vendedorId = json['vendedor_id'].toString();
+    }
+
+    String? pacienteId;
+    String? pacienteNombre = json['paciente_nombre']?.toString();
+    String? pacienteTelefono = json['paciente_telefono']?.toString();
+    if (json['paciente_id'] is Map) {
+      pacienteId = json['paciente_id']['_id']?.toString() ?? json['paciente_id']['id']?.toString();
+      pacienteNombre ??= json['paciente_id']['nombre']?.toString();
+      pacienteTelefono ??= json['paciente_id']['telefono']?.toString();
+    } else if (json['paciente_id'] != null) {
+      pacienteId = json['paciente_id'].toString();
+    }
+
     return Venta(
-      id: json['_id'] ?? json['id'],
-      folio: json['folio'],
+      id: (json['_id'] is Map ? (json['_id']['oid'] ?? json['_id']['_id'] ?? json['_id'].toString()) : (json['_id'] ?? json['id']))?.toString(),
+      folio: json['folio']?.toString(),
       fecha: _parseDate(json['fecha']),
-      vendedor: json['vendedor'] ?? '',
-      vendedorId: json['vendedor_id'],
-      pacienteId: json['paciente_id'],
-      pacienteNombre: json['paciente_nombre'],
-      pacienteTelefono: json['paciente_telefono'],
+      vendedor: vendedor,
+      vendedorId: vendedorId,
+      pacienteId: pacienteId,
+      pacienteNombre: pacienteNombre,
+      pacienteTelefono: pacienteTelefono,
       productos: productos,
       subtotal: _parseDouble(json['subtotal']),
       descuentoTotal: _parseDouble(json['descuento_total']),
@@ -131,7 +167,7 @@ static double _parseDouble(dynamic value) {
       anticipo: _parseDouble(json['anticipo']),
       saldoPendiente: _parseDouble(json['saldo_pendiente']),
       formaPago: json['forma_pago'] ?? 'efectivo',
-      detallePagoMixto: json['detalle_pago_mixto'],
+      detallePagoMixto: _parseDetallePagoMixto(json['detalle_pago_mixto']),
       fechaEntrega: json['fecha_entrega'] != null 
           ? _parseDate(json['fecha_entrega']) 
           : null,

@@ -19,8 +19,10 @@ class DashboardService {
         Uri.parse('$baseUrl/dashboard/stats'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Asegúrate que sea "Bearer" con espacio
+          'Authorization': 'Bearer $token', 
+
         },
+        
       ); 
 
       if (response.statusCode == 200) {

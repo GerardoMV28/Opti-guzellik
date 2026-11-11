@@ -136,4 +136,29 @@ static Future<Venta> updateEstado(String ventaId, String estado, String nota) as
     throw Exception('Error de conexión: $e');
   }
 }
+
+  // Obtener ventas por paciente directamente desde el backend
+  static Future<List<Venta>> getVentasByPaciente(String pacienteId) async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/paciente/$pacienteId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((item) => Venta.fromJson(item)).toList();
+      } else {
+        throw Exception('Error al cargar ventas del paciente: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error al obtener ventas por paciente: $e');
+      return [];
+    }
+  }
+
 }
